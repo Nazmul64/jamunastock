@@ -1345,6 +1345,24 @@
                                         </a>
                                     </li>
                                     <li class="">
+                                        <a href="{{ route('admin.suppliers.payments.index') }}">
+                                            <i class="ti-money text-success"></i>
+                                            <span>সাপ্লায়ার পেমেন্ট (Accounts)</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a href="{{ route('admin.suppliers.customer_distributions') }}">
+                                            <i class="ti-share text-info"></i>
+                                            <span>গ্রাহক বিতরণ মনিটরিং</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a href="{{ route('admin.suppliers.master_dashboard') }}">
+                                            <i class="ti-bar-chart text-primary"></i>
+                                            <span>মাস্টার অ্যাকাউন্টিং ও স্টক</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
                                         <a href="{{ route('admin.suppliers.reports') }}">
                                             <i class="ti-more"></i>
                                             <span>সাপ্লায়ার রিপোর্টস</span>

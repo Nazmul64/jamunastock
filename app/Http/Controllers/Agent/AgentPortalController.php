@@ -992,6 +992,21 @@ class AgentPortalController extends Controller
                 'received_at' => now(),
             ]);
 
+            // Create / Update Supplier Payable Ledger Entry (SRD Section 7 & Rule 05)
+            if ($cumReceivedAmount > 0) {
+                $payable = \App\Models\SupplierPayable::updateOrCreate(
+                    ['supplier_supply_id' => $supply->id],
+                    [
+                        'supplier_id' => $supply->supplier_id,
+                        'supply_code' => $supply->supply_code,
+                        'invoice_no' => $supply->invoice_no,
+                        'payable_amount' => $cumReceivedAmount,
+                        'payable_date' => $request->received_date,
+                    ]
+                );
+                $payable->recalculateStatus();
+            }
+
             \App\Services\SupplyWorkflowService::recordStatusChange(
                 $supply,
                 $oldStatus,
@@ -1047,6 +1062,8 @@ class AgentPortalController extends Controller
         );
 
         $stock->increment('allocated_quantity', $qty);
+        $stock->refresh();
+        $balanceAfter = max(0, (float) $stock->allocated_quantity - (float) $stock->sold_quantity);
 
         AgentStockTransaction::create([
             'agent_id' => $agentUserId,
@@ -1058,5 +1075,311 @@ class AgentPortalController extends Controller
             'notes' => "Supplier Direct Supply Received: {$supplyCode}",
             'transaction_date' => date('Y-m-d'),
         ]);
+
+        $agentPoint = AgentPoint::where('agent_user_id', $agentUserId)->first();
+        \App\Models\StockMovement::create([
+            'agent_id' => $agentUserId,
+            'agent_point_id' => $agentPoint?->id,
+            'branch_id' => $agentPoint?->branch_id,
+            'product_name' => $productName,
+            'unit' => 'Kg',
+            'movement_type' => 'supplier_received',
+            'direction' => 'in',
+            'quantity' => $qty,
+            'balance_after' => $balanceAfter,
+            'reference_type' => 'SupplierSupply',
+            'reference_code' => $supplyCode,
+            'remarks' => "Supplier Direct Supply Received ({$supplyCode})",
+            'created_by' => Auth::id(),
+            'movement_date' => date('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * SRD Section 2, 4, 5: Customer Product Distribution List & Daily Register
+     */
+    public function customerDistributions(Request $request)
+    {
+        $agentPoint = $this->getAgentPoint();
+        $agentUserId = $agentPoint->agent_user_id ?: Auth::id();
+        $today = date('Y-m-d');
+
+        $query = \App\Models\CustomerDistribution::with('items')
+            ->where('agent_id', $agentUserId);
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('distribution_code', 'like', "%{$s}%")
+                  ->orWhere('customer_name', 'like', "%{$s}%")
+                  ->orWhere('customer_code', 'like', "%{$s}%")
+                  ->orWhere('customer_phone', 'like', "%{$s}%");
+            });
+        }
+        if ($request->filled('distribution_type')) {
+            $query->where('distribution_type', $request->distribution_type);
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('distribution_date', $request->date);
+        }
+
+        $distributions = $query->orderByDesc('id')->paginate(15)->withQueryString();
+
+        // Today's Summary & Daily Register (Section 4 & 5)
+        $todayDistributions = \App\Models\CustomerDistribution::where('agent_id', $agentUserId)
+            ->whereDate('distribution_date', $today)
+            ->where('status', 'completed')
+            ->get();
+        $todayDistributedQty = $todayDistributions->sum('total_quantity');
+        $todayCustomersCount = $todayDistributions->count();
+
+        $todayReceivedQty = \App\Models\StockMovement::where('agent_id', $agentUserId)
+            ->whereDate('movement_date', $today)
+            ->where('direction', 'in')
+            ->sum('quantity');
+
+        $agentStocks = AgentStock::where('agent_id', $agentUserId)->get();
+        $currentTotalStock = $agentStocks->sum(fn ($s) => max(0, (float) $s->allocated_quantity - (float) $s->sold_quantity));
+
+        // Daily Product Register: Opening + Received - Distributed = Closing
+        $dailyRegister = $agentStocks->map(function ($st) use ($agentUserId, $today) {
+            $closing = max(0, (float) $st->allocated_quantity - (float) $st->sold_quantity);
+            $receivedToday = (float) \App\Models\StockMovement::where('agent_id', $agentUserId)
+                ->where('product_name', $st->stock_name)
+                ->whereDate('movement_date', $today)
+                ->where('direction', 'in')
+                ->sum('quantity');
+            $distributedToday = (float) \App\Models\StockMovement::where('agent_id', $agentUserId)
+                ->where('product_name', $st->stock_name)
+                ->whereDate('movement_date', $today)
+                ->where('direction', 'out')
+                ->sum('quantity');
+            $opening = max(0, $closing - $receivedToday + $distributedToday);
+
+            return [
+                'product_name' => $st->stock_name,
+                'opening' => $opening,
+                'received' => $receivedToday,
+                'distributed' => $distributedToday,
+                'closing' => $closing,
+            ];
+        });
+
+        return view('agent.distributions.index', compact(
+            'agentPoint',
+            'distributions',
+            'todayDistributedQty',
+            'todayCustomersCount',
+            'todayReceivedQty',
+            'currentTotalStock',
+            'dailyRegister'
+        ));
+    }
+
+    /**
+     * Create Customer Product Distribution Form (Multi-product POS-style)
+     */
+    public function createCustomerDistribution()
+    {
+        $agentPoint = $this->getAgentPoint();
+        $agentUserId = $agentPoint->agent_user_id ?: Auth::id();
+
+        $stocks = AgentStock::where('agent_id', $agentUserId)
+            ->get()
+            ->filter(fn ($s) => ($s->allocated_quantity - $s->sold_quantity) > 0);
+
+        $units = \App\Models\ProductUnit::active()->get();
+        $categories = \App\Models\ProductCategory::active()->get();
+        $customers = User::where('role', 'user')->orderBy('name')->limit(200)->get();
+
+        return view('agent.distributions.create', compact('agentPoint', 'stocks', 'units', 'categories', 'customers'));
+    }
+
+    /**
+     * Store Customer Distribution + Enforce Stock >= 0 + Update Stock & Movements
+     */
+    public function storeCustomerDistribution(Request $request)
+    {
+        $agentPoint = $this->getAgentPoint();
+        $agentUserId = $agentPoint->agent_user_id ?: Auth::id();
+
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_code' => 'nullable|string|max:60',
+            'customer_phone' => 'nullable|string|max:30',
+            'customer_id' => 'nullable|exists:users,id',
+            'distribution_date' => 'required|date',
+            'distribution_type' => 'required|in:free,paid,subsidized,credit',
+            'payment_status' => 'required|in:paid,unpaid,partial,not_applicable',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'note' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.product_name' => 'required|string|max:255',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'required|string|max:50',
+            'items.*.rate' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $distribution = DB::transaction(function () use ($request, $agentPoint, $agentUserId) {
+                $items = $request->input('items');
+                $totalQty = 0;
+                $grandTotal = 0;
+
+                // Validate stock availability first (Rule 04: Stock Cannot Be Negative)
+                foreach ($items as $item) {
+                    $qty = (float) $item['quantity'];
+                    $stock = AgentStock::where('agent_id', $agentUserId)
+                        ->where('stock_name', $item['product_name'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    $available = $stock ? max(0, (float) $stock->allocated_quantity - (float) $stock->sold_quantity) : 0;
+                    if ($qty > $available) {
+                        throw new \RuntimeException("অপর্যাপ্ত স্টক! '{$item['product_name']}' এর বর্তমান স্টক আছে {$available}, কিন্তু আপনি {$qty} দেওয়ার চেষ্টা করেছেন।");
+                    }
+
+                    $rate = $request->distribution_type === 'free' ? 0 : (float) ($item['rate'] ?? 0);
+                    $totalQty += $qty;
+                    $grandTotal += ($qty * $rate);
+                }
+
+                $paidAmount = $request->distribution_type === 'free' ? 0 : (float) ($request->paid_amount ?? 0);
+                if ($request->payment_status === 'paid' && $paidAmount <= 0) {
+                    $paidAmount = $grandTotal;
+                }
+                $dueAmount = max(0, $grandTotal - $paidAmount);
+
+                $distCode = \App\Models\CustomerDistribution::generateCode();
+
+                $distribution = \App\Models\CustomerDistribution::create([
+                    'distribution_code' => $distCode,
+                    'agent_id' => $agentUserId,
+                    'agent_point_id' => $agentPoint->id,
+                    'branch_id' => $agentPoint->branch_id,
+                    'customer_id' => $request->customer_id,
+                    'customer_code' => $request->customer_code,
+                    'customer_name' => $request->customer_name,
+                    'customer_phone' => $request->customer_phone,
+                    'distribution_date' => $request->distribution_date,
+                    'distribution_type' => $request->distribution_type,
+                    'payment_status' => $request->distribution_type === 'free' ? 'not_applicable' : $request->payment_status,
+                    'total_quantity' => $totalQty,
+                    'total_amount' => $grandTotal,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
+                    'note' => $request->note,
+                    'status' => 'completed',
+                    'created_by' => Auth::id(),
+                ]);
+
+                foreach ($items as $item) {
+                    $qty = (float) $item['quantity'];
+                    $rate = $request->distribution_type === 'free' ? 0 : (float) ($item['rate'] ?? 0);
+                    $lineTotal = $qty * $rate;
+
+                    \App\Models\CustomerDistributionItem::create([
+                        'distribution_id' => $distribution->id,
+                        'product_name' => $item['product_name'],
+                        'category' => $item['category'] ?? null,
+                        'quantity' => $qty,
+                        'unit' => $item['unit'],
+                        'rate' => $rate,
+                        'total_amount' => $lineTotal,
+                    ]);
+
+                    $stock = AgentStock::where('agent_id', $agentUserId)
+                        ->where('stock_name', $item['product_name'])
+                        ->first();
+                    $stock->increment('sold_quantity', $qty);
+                    $stock->refresh();
+                    $balanceAfter = max(0, (float) $stock->allocated_quantity - (float) $stock->sold_quantity);
+
+                    AgentStockTransaction::create([
+                        'agent_id' => $agentUserId,
+                        'stock_name' => $item['product_name'],
+                        'transaction_type' => 'delivery_out',
+                        'quantity' => $qty,
+                        'unit_price' => $rate,
+                        'total_price' => $lineTotal,
+                        'customer_name' => $request->customer_name,
+                        'customer_phone' => $request->customer_phone,
+                        'customer_card_number' => $request->customer_code,
+                        'notes' => "Customer Distribution ({$distCode})",
+                        'transaction_date' => $request->distribution_date,
+                    ]);
+
+                    \App\Models\StockMovement::create([
+                        'agent_id' => $agentUserId,
+                        'agent_point_id' => $agentPoint->id,
+                        'branch_id' => $agentPoint->branch_id,
+                        'product_name' => $item['product_name'],
+                        'unit' => $item['unit'],
+                        'movement_type' => 'customer_distribution',
+                        'direction' => 'out',
+                        'quantity' => $qty,
+                        'balance_after' => $balanceAfter,
+                        'reference_type' => 'CustomerDistribution',
+                        'reference_id' => $distribution->id,
+                        'reference_code' => $distCode,
+                        'remarks' => "Distributed to {$request->customer_name}",
+                        'created_by' => Auth::id(),
+                        'movement_date' => $request->distribution_date,
+                    ]);
+                }
+
+                return $distribution;
+            });
+
+            return redirect()->route('agent.distributions.show', $distribution->id)
+                ->with('success', "গ্রাহক বিতরণ ({$distribution->distribution_code}) সফলভাবে সম্পন্ন হয়েছে এবং স্টক আপডেট হয়েছে!");
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    public function showCustomerDistribution($id)
+    {
+        $agentPoint = $this->getAgentPoint();
+        $agentUserId = $agentPoint->agent_user_id ?: Auth::id();
+
+        $distribution = \App\Models\CustomerDistribution::with(['items', 'agent', 'agentPoint', 'branch'])
+            ->where('agent_id', $agentUserId)
+            ->findOrFail($id);
+
+        return view('agent.distributions.show', compact('agentPoint', 'distribution'));
+    }
+
+    public function customerHistory(Request $request)
+    {
+        $agentPoint = $this->getAgentPoint();
+        $agentUserId = $agentPoint->agent_user_id ?: Auth::id();
+
+        $search = $request->input('search');
+        $distributions = collect();
+        $productTotals = collect();
+
+        if ($search) {
+            $distributions = \App\Models\CustomerDistribution::with('items')
+                ->where('agent_id', $agentUserId)
+                ->where(function ($q) use ($search) {
+                    $q->where('customer_code', $search)
+                      ->orWhere('customer_phone', $search)
+                      ->orWhere('customer_name', 'like', "%{$search}%");
+                })
+                ->orderByDesc('distribution_date')
+                ->get();
+
+            $productTotals = $distributions->flatMap->items->groupBy('product_name')->map(function ($rows, $name) {
+                return [
+                    'product_name' => $name,
+                    'total_qty' => $rows->sum('quantity'),
+                    'unit' => $rows->first()->unit ?? '',
+                    'total_amount' => $rows->sum('total_amount'),
+                ];
+            });
+        }
+
+        return view('agent.distributions.customer_history', compact('agentPoint', 'search', 'distributions', 'productTotals'));
     }
 }

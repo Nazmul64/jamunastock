@@ -445,7 +445,12 @@ Route::group(['prefix' => 'admin', 'middleware' => 'AdminCheck'], function () {
     Route::get('/suppliers/audit-logs', [AdminSupplierController::class, 'auditLogs'])->name('admin.suppliers.audit_logs');
     Route::get('/suppliers/notifications', [AdminSupplierController::class, 'notificationsIndex'])->name('admin.suppliers.notifications');
     Route::get('/suppliers/notifications/{id}/read', [AdminSupplierController::class, 'markNotificationRead'])->name('admin.suppliers.notifications.read');
+    Route::get('/suppliers/notifications/read-all', [AdminSupplierController::class, 'markAllNotificationsRead'])->name('admin.suppliers.notifications.read_all_get');
     Route::post('/suppliers/notifications/read-all', [AdminSupplierController::class, 'markAllNotificationsRead'])->name('admin.suppliers.notifications.read_all');
+    Route::get('/suppliers/customer-distributions', [AdminSupplierController::class, 'customerDistributions'])->name('admin.suppliers.customer_distributions');
+    Route::get('/suppliers/payments', [AdminSupplierController::class, 'supplierPaymentsIndex'])->name('admin.suppliers.payments.index');
+    Route::post('/suppliers/payments/store-allocated', [AdminSupplierController::class, 'storeSupplierPaymentAllocated'])->name('admin.suppliers.payments.store_allocated');
+    Route::get('/suppliers/master-accounting', [AdminSupplierController::class, 'masterAccountingDashboard'])->name('admin.suppliers.master_dashboard');
     Route::post('/suppliers/payment/store', [AdminSupplierController::class, 'storePayment'])->name('admin.suppliers.payment.store');
     Route::get('/suppliers/reports', [AdminSupplierController::class, 'reports'])->name('admin.suppliers.reports');
     Route::get('/suppliers/statement/print/{id}', [AdminSupplierController::class, 'printStatement'])->name('admin.suppliers.statement.print');
@@ -886,6 +891,11 @@ Route::group(['prefix' => 'agent', 'middleware' => 'AgentChecker'], function () 
     Route::get('/supplies', [\App\Http\Controllers\Agent\AgentPortalController::class, 'incomingSupplies'])->name('agent.supplies.index');
     Route::get('/supplies/{id}', [\App\Http\Controllers\Agent\AgentPortalController::class, 'showIncomingSupply'])->name('agent.supplies.show');
     Route::post('/supplies/{id}/receive', [\App\Http\Controllers\Agent\AgentPortalController::class, 'receiveIncomingSupply'])->name('agent.supplies.receive');
+    Route::get('/distributions', [\App\Http\Controllers\Agent\AgentPortalController::class, 'customerDistributions'])->name('agent.distributions.index');
+    Route::get('/distributions/create', [\App\Http\Controllers\Agent\AgentPortalController::class, 'createCustomerDistribution'])->name('agent.distributions.create');
+    Route::post('/distributions/store', [\App\Http\Controllers\Agent\AgentPortalController::class, 'storeCustomerDistribution'])->name('agent.distributions.store');
+    Route::get('/distributions/customer-history', [\App\Http\Controllers\Agent\AgentPortalController::class, 'customerHistory'])->name('agent.distributions.customer_history');
+    Route::get('/distributions/{id}', [\App\Http\Controllers\Agent\AgentPortalController::class, 'showCustomerDistribution'])->name('agent.distributions.show');
     Route::get('/dispatches', [\App\Http\Controllers\Agent\AgentPortalController::class, 'dispatches'])->name('agent.dispatches');
     Route::post('/dispatches/receive/{id}', [\App\Http\Controllers\Agent\AgentPortalController::class, 'confirmReceiveDispatch'])->name('agent.dispatches.receive');
     Route::get('/members', [\App\Http\Controllers\Agent\AgentPortalController::class, 'members'])->name('agent.members');

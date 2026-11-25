@@ -305,6 +305,14 @@
                 <i class="fa fa-inbox text-info"></i>
                 <span>ইনকামিং সাপ্লাই (Supplier)</span>
             </a>
+            <a href="{{ route('agent.distributions.index') }}" class="agent-nav-link {{ request()->routeIs('agent.distributions.index') || request()->routeIs('agent.distributions.create') || request()->routeIs('agent.distributions.show') ? 'active' : '' }}">
+                <i class="fa fa-share-square-o text-success"></i>
+                <span>গ্রাহক বিতরণ (Distribution)</span>
+            </a>
+            <a href="{{ route('agent.distributions.customer_history') }}" class="agent-nav-link {{ request()->routeIs('agent.distributions.customer_history') ? 'active' : '' }}">
+                <i class="fa fa-history text-warning"></i>
+                <span>Customer History</span>
+            </a>
             <a href="{{ route('agent.dispatches') }}" class="agent-nav-link {{ request()->routeIs('agent.dispatches*') ? 'active' : '' }}">
                 <i class="fa fa-truck text-warning"></i>
                 <span>ইনকামিং ডিসপ্যাচ (Receive)</span>

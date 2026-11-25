@@ -844,4 +844,255 @@ class AdminSupplierController extends Controller
 
         return back()->with('success', 'সকল নোটিফিকেশন পঠিত হিসেবে চিহ্নিত করা হয়েছে।');
     }
+
+    /**
+     * SRD Section 6 & 13: Admin Customer Product Distribution Monitoring
+     */
+    public function customerDistributions(Request $request)
+    {
+        $query = \App\Models\CustomerDistribution::with(['items', 'agent', 'agentPoint', 'branch']);
+
+        if ($request->filled('distribution_code')) {
+            $query->where('distribution_code', 'like', '%' . $request->distribution_code . '%');
+        }
+        if ($request->filled('agent_id')) {
+            $query->where('agent_id', $request->agent_id);
+        }
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+        if ($request->filled('customer')) {
+            $c = $request->customer;
+            $query->where(function ($q) use ($c) {
+                $q->where('customer_name', 'like', "%{$c}%")
+                  ->orWhere('customer_code', 'like', "%{$c}%")
+                  ->orWhere('customer_phone', 'like', "%{$c}%");
+            });
+        }
+        if ($request->filled('product')) {
+            $p = $request->product;
+            $query->whereHas('items', fn ($q) => $q->where('product_name', 'like', "%{$p}%"));
+        }
+        if ($request->filled('distribution_type')) {
+            $query->where('distribution_type', $request->distribution_type);
+        }
+        if ($request->filled('from_date')) {
+            $query->whereDate('distribution_date', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('distribution_date', '<=', $request->to_date);
+        }
+
+        $distributions = $query->orderByDesc('id')->paginate(20)->withQueryString();
+
+        $totalQty = \App\Models\CustomerDistribution::where('status', 'completed')->sum('total_quantity');
+        $freeCount = \App\Models\CustomerDistribution::where('distribution_type', 'free')->count();
+        $paidCount = \App\Models\CustomerDistribution::where('distribution_type', '!=', 'free')->count();
+        $totalAmount = \App\Models\CustomerDistribution::sum('total_amount');
+
+        $agents = User::where('role', 'agent')->orderBy('name')->get();
+        $branches = HrmBranch::orderBy('name')->get();
+
+        return view('admin.suppliers.customer_distributions', compact(
+            'distributions',
+            'totalQty',
+            'freeCount',
+            'paidCount',
+            'totalAmount',
+            'agents',
+            'branches'
+        ));
+    }
+
+    /**
+     * SRD Section 9, 10, 11: Accounts -> Supplier Payments & Invoice Allocation
+     */
+    public function supplierPaymentsIndex(Request $request)
+    {
+        $suppliers = User::where('role', 'supplier')->with('supplierProfile')->orderBy('name')->get();
+
+        // Sync any received supplies that don't have a payable row yet
+        $missingPayables = SupplierSupply::whereIn('status', ['received', 'partially_received', 'discrepancy'])
+            ->where('actual_received_amount', '>', 0)
+            ->whereDoesntHave('payable')
+            ->get();
+        foreach ($missingPayables as $ms) {
+            \App\Models\SupplierPayable::create([
+                'supplier_id' => $ms->supplier_id,
+                'supplier_supply_id' => $ms->id,
+                'supply_code' => $ms->supply_code,
+                'invoice_no' => $ms->invoice_no,
+                'payable_amount' => $ms->actual_received_amount,
+                'paid_amount' => 0,
+                'due_amount' => $ms->actual_received_amount,
+                'payment_status' => 'unpaid',
+                'payable_date' => $ms->received_at?->toDateString() ?? $ms->supply_date,
+            ]);
+        }
+
+        $payablesQuery = \App\Models\SupplierPayable::with(['supplier.supplierProfile', 'supply']);
+        if ($request->filled('supplier_id')) {
+            $payablesQuery->where('supplier_id', $request->supplier_id);
+        }
+        if ($request->filled('payment_status')) {
+            $payablesQuery->where('payment_status', $request->payment_status);
+        }
+        $payables = $payablesQuery->orderByDesc('id')->get();
+
+        $payments = SupplierPayment::with(['supplier.supplierProfile', 'creator', 'allocations.payable'])
+            ->when($request->filled('supplier_id'), fn ($q) => $q->where('supplier_id', $request->supplier_id))
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $totalPayable = $payables->sum('payable_amount');
+        $totalPaid = $payables->sum('paid_amount');
+        $totalDue = $payables->sum('due_amount');
+
+        return view('admin.suppliers.payments', compact(
+            'suppliers',
+            'payables',
+            'payments',
+            'totalPayable',
+            'totalPaid',
+            'totalDue'
+        ));
+    }
+
+    public function storeSupplierPaymentAllocated(Request $request)
+    {
+        $request->validate([
+            'supplier_id' => 'required|exists:users,id',
+            'supplier_payable_id' => 'nullable|exists:supplier_payables,id',
+            'payment_date' => 'required|date',
+            'payment_method' => 'required|in:cash,bank,bkash,nagad,rocket,other',
+            'amount' => 'required|numeric|min:0.01',
+            'bank_name' => 'nullable|string|max:255',
+            'account_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'transaction_id' => 'nullable|string|max:255',
+            'reference_no' => 'nullable|string|max:120',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'note' => 'nullable|string',
+        ]);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $fileName = 'pay_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $dir = public_path('upload/payment_receipts');
+            if (!file_exists($dir)) {
+                mkdir($dir, 0775, true);
+            }
+            $file->move($dir, $fileName);
+            $attachmentPath = 'upload/payment_receipts/' . $fileName;
+        }
+
+        DB::transaction(function () use ($request, $attachmentPath) {
+            $paymentNo = SupplierPayment::generatePaymentNo();
+
+            $payment = SupplierPayment::create([
+                'payment_no' => $paymentNo,
+                'supplier_id' => $request->supplier_id,
+                'payment_date' => $request->payment_date,
+                'payment_method' => $request->payment_method,
+                'amount' => $request->amount,
+                'bank_name' => $request->bank_name,
+                'account_name' => $request->account_name,
+                'account_number' => $request->account_number,
+                'transaction_id' => $request->transaction_id,
+                'reference_no' => $request->reference_no,
+                'attachment_path' => $attachmentPath,
+                'note' => $request->note,
+                'created_by' => Auth::id(),
+            ]);
+
+            $remainingToAllocate = (float) $request->amount;
+
+            // If specific invoice/payable selected, allocate to it first
+            if ($request->filled('supplier_payable_id')) {
+                $target = \App\Models\SupplierPayable::where('supplier_id', $request->supplier_id)
+                    ->find($request->supplier_payable_id);
+                if ($target && $target->due_amount > 0) {
+                    $alloc = min($remainingToAllocate, (float) $target->due_amount);
+                    if ($alloc > 0) {
+                        \App\Models\SupplierPaymentAllocation::create([
+                            'supplier_payment_id' => $payment->id,
+                            'supplier_payable_id' => $target->id,
+                            'supplier_supply_id' => $target->supplier_supply_id,
+                            'allocated_amount' => $alloc,
+                        ]);
+                        $target->recalculateStatus();
+                        $remainingToAllocate -= $alloc;
+                    }
+                }
+            }
+
+            // FIFO allocate any remaining payment amount across unpaid/partial invoices
+            if ($remainingToAllocate > 0.01) {
+                $openPayables = \App\Models\SupplierPayable::where('supplier_id', $request->supplier_id)
+                    ->where('due_amount', '>', 0)
+                    ->orderBy('id', 'asc')
+                    ->get();
+                foreach ($openPayables as $op) {
+                    if ($remainingToAllocate <= 0.01) break;
+                    $alloc = min($remainingToAllocate, (float) $op->due_amount);
+                    if ($alloc > 0) {
+                        \App\Models\SupplierPaymentAllocation::create([
+                            'supplier_payment_id' => $payment->id,
+                            'supplier_payable_id' => $op->id,
+                            'supplier_supply_id' => $op->supplier_supply_id,
+                            'allocated_amount' => $alloc,
+                        ]);
+                        $op->recalculateStatus();
+                        $remainingToAllocate -= $alloc;
+                    }
+                }
+            }
+
+            SystemNotification::notifyUser(
+                (int) $request->supplier_id,
+                'supplier',
+                'পেমেন্ট প্রাপ্তি (' . $paymentNo . ')',
+                'অ্যাডমিন আপনার অ্যাকাউন্টে ৳' . number_format($request->amount, 2) . ' (' . strtoupper($request->payment_method) . ') পরিশোধ করেছেন।',
+                'success',
+                'SupplierPayment',
+                $payment->id,
+                route('supplier.statement')
+            );
+        });
+
+        return back()->with('success', 'সাপ্লায়ার পেমেন্ট সফলভাবে রেকর্ড ও ইনভয়েসে সমন্বয় করা হয়েছে!');
+    }
+
+    /**
+     * SRD Section 13 & 15: Master Inventory, Stock Movements & Accounting Dashboard
+     */
+    public function masterAccountingDashboard(Request $request)
+    {
+        $totalSupplierPayable = \App\Models\SupplierPayable::sum('payable_amount');
+        $totalSupplierPaid = \App\Models\SupplierPayable::sum('paid_amount');
+        $totalSupplierDue = \App\Models\SupplierPayable::sum('due_amount');
+        $totalDistributionQty = \App\Models\CustomerDistribution::where('status', 'completed')->sum('total_quantity');
+        $totalDistributionAmount = \App\Models\CustomerDistribution::where('status', 'completed')->sum('total_amount');
+
+        $movements = \App\Models\StockMovement::with(['agent', 'agentPoint'])
+            ->when($request->filled('movement_type'), fn ($q) => $q->where('movement_type', $request->movement_type))
+            ->when($request->filled('product'), fn ($q) => $q->where('product_name', 'like', '%' . $request->product . '%'))
+            ->orderByDesc('id')
+            ->paginate(25)
+            ->withQueryString();
+
+        $agentStocks = \App\Models\AgentStock::with('agent')->get();
+
+        return view('admin.suppliers.master_dashboard', compact(
+            'totalSupplierPayable',
+            'totalSupplierPaid',
+            'totalSupplierDue',
+            'totalDistributionQty',
+            'totalDistributionAmount',
+            'movements',
+            'agentStocks'
+        ));
+    }
 }

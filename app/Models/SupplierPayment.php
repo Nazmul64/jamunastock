@@ -9,18 +9,16 @@ class SupplierPayment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'supplier_id',
-        'payment_date',
-        'payment_method',
-        'amount',
-        'bank_name',
-        'account_name',
-        'account_number',
-        'transaction_id',
-        'note',
-        'created_by',
-    ];
+    protected $guarded = [];
+
+    public static function generatePaymentNo(): string
+    {
+        $year = date('Y');
+        $prefix = "PAY-{$year}-";
+        $last = self::where('payment_no', 'like', $prefix . '%')->orderByDesc('id')->value('payment_no');
+        $next = $last ? ((int) explode('-', $last)[2]) + 1 : (self::count() + 1);
+        return $prefix . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+    }
 
     public function supplier()
     {
@@ -30,5 +28,10 @@ class SupplierPayment extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function allocations()
+    {
+        return $this->hasMany(SupplierPaymentAllocation::class, 'supplier_payment_id');
     }
 }

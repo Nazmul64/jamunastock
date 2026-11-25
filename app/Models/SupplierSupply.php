@@ -118,6 +118,11 @@ class SupplierSupply extends Model
         return $this->hasMany(SupplierSupplyAttachment::class, 'supplier_supply_id');
     }
 
+    public function payable()
+    {
+        return $this->hasOne(SupplierPayable::class, 'supplier_supply_id');
+    }
+
     public function getPayableAmountAttribute(): float
     {
         if (in_array($this->status, ['received', 'partially_received', 'discrepancy'], true)) {
