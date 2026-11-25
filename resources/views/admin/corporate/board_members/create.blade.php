@@ -1,0 +1,113 @@
+@extends('layouts.backend.app')
+
+@section('content')
+<div class="content-wrapper">
+    <div class="container-full">
+        <!-- Content Header -->
+        <div class="content-header">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h4 class="page-title"><i class="fa fa-user-plus text-success me-2"></i>নতুন পর্ষদ সদস্য যুক্ত করুন</h4>
+                    <p class="text-muted mb-0">পরিচালনা পর্ষদ বা কর্মকর্তার পরিচিতি ও বাণী প্রদান করুন</p>
+                </div>
+                <div>
+                    <a href="{{ route('admin.corporate.board.index') }}" class="btn btn-secondary btn-sm">
+                        &larr; তালিকায় ফিরে যান
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="box">
+                <div class="box-body">
+                    <form action="{{ route('admin.corporate.board.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">নাম (ইংরেজি) <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" required placeholder="e.g. Dr. A. K. M. Mostafa Kamal">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">নাম (বাংলা)</label>
+                                <input type="text" name="name_bn" class="form-control" placeholder="উদাঃ ড. এ. কে. এম. মোস্তফা কামাল">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">পদবী (ইংরেজি) <span class="text-danger">*</span></label>
+                                <input type="text" name="designation" class="form-control" required placeholder="e.g. Chairman / Managing Director">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">পদবী (বাংলা)</label>
+                                <input type="text" name="designation_bn" class="form-control" placeholder="উদাঃ চেয়ারম্যান / ব্যবস্থাপনা পরিচালক">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-bold">প্রশাসনিক ভূমিকা (Role) <span class="text-danger">*</span></label>
+                                <select name="role_type" class="form-select" required>
+                                    <option value="chairman">চেয়ারম্যান (Chairman)</option>
+                                    <option value="md">ম্যানেজিং ডিরেক্টর (MD)</option>
+                                    <option value="ceo">চিফ এক্সিকিউটিভ অফিসার (CEO)</option>
+                                    <option value="marketing_head">হেড অব মার্কেটিং (Marketing Head)</option>
+                                    <option value="finance_head">হেড অব ফাইন্যান্স (Finance Head)</option>
+                                    <option value="director">পরিচালক (Director)</option>
+                                    <option value="executive">কর্মকর্তা (Executive)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-bold">ক্রম নম্বর (Order)</label>
+                                <input type="number" name="order_num" class="form-control" placeholder="1, 2, 3...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-bold">প্রোফাইল ছবি</label>
+                                <input type="file" name="photo" class="form-control" accept="image/*">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">মোবাইল নম্বর</label>
+                                <input type="text" name="phone" class="form-control" placeholder="017XXXXXXXX">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">ইমেইল ঠিকানা</label>
+                                <input type="email" name="email" class="form-control" placeholder="email@jamunastock.com">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label font-weight-bold">সংক্ষিপ্ত পরিচিতি ও ভূমিকা (Bio)</label>
+                                <textarea name="bio" class="form-control" rows="3" placeholder="সদস্যের শিক্ষাগত ও পেশাগত পরিচিতি..."></textarea>
+                            </div>
+
+                            <!-- Leadership Message Section -->
+                            <div class="col-12 pt-3 border-top">
+                                <h5 class="text-success font-weight-bold"><i class="fa fa-comment-alt me-1"></i>নেতৃবৃন্দের বাণী (ঐচ্ছিক)</h5>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label font-weight-bold">বাণীর শিরোনাম (Speech Title)</label>
+                                <input type="text" name="speech_title" class="form-control" placeholder="উদাঃ সততা ও সমৃদ্ধির নব দিগন্ত">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label font-weight-bold">সম্পূর্ণ বাণী / বার্তা (Speech Message)</label>
+                                <textarea name="speech_message" class="form-control" rows="4" placeholder="ওয়েবসাইটে প্রদর্শিত সম্পূর্ণ বক্তব্য..."></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck" checked value="1">
+                                    <label class="form-check-label font-weight-bold" for="isActiveCheck">
+                                        ওয়েবসাইটে সক্রিয় রাখুন
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-success font-weight-bold px-4">সংরক্ষণ করুন</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+@endsection
+

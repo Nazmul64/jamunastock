@@ -1,0 +1,1271 @@
+@php
+    $currentPath = trim(request()->path(), '/');
+    $isAdmin = request()->routeIs('admin*') || request()->is('admin*') || str_starts_with($currentPath, 'admin') || request()->get('portal') === 'admin' || request()->get('role') === 'admin';
+    $isSupplier = request()->routeIs('supplier*') || request()->is('supplier*') || str_starts_with($currentPath, 'supplier') || request()->get('portal') === 'supplier' || request()->get('role') === 'supplier';
+    $isEmployee = request()->routeIs('employee*') || request()->is('employee*') || str_starts_with($currentPath, 'employee') || request()->get('portal') === 'employee' || request()->get('role') === 'employee';
+    $isAgent = request()->routeIs('agent*') || request()->is('agent*') || str_starts_with($currentPath, 'agent') || request()->get('portal') === 'agent' || request()->get('role') === 'agent';
+
+    $siteTitle = setting('title') ?: config('app.name', 'JAMUNA STOCK MARKET PLC');
+
+    if ($isAdmin) {
+        $pageTitle = 'এডমিন লগইন (Admin Login)';
+        $portalBadge = 'Admin Security Portal';
+        $portalTitle = 'Admin Login';
+        $welcomeText = 'Admin Access. State credentials.';
+    } elseif ($isSupplier) {
+        $pageTitle = 'সাপ্লায়ার লগইন (Supplier Login)';
+        $portalBadge = 'Supplier Partner Portal';
+        $portalTitle = 'Supplier Portal Login';
+        $welcomeText = 'Supplier Partner. State credentials.';
+    } elseif ($isEmployee) {
+        $pageTitle = 'এমপ্লয়ি লগইন (Employee Login)';
+        $portalBadge = 'Staff & Employee Portal';
+        $portalTitle = 'Employee Login';
+        $welcomeText = 'Employee Access. State credentials.';
+    } elseif ($isAgent) {
+        $pageTitle = 'এজেন্ট লগইন (Agent Login)';
+        $portalBadge = 'Agent Portal';
+        $portalTitle = 'Agent Login';
+        $welcomeText = 'Agent Access. State credentials.';
+    } else {
+        $pageTitle = 'কাস্টমার লগইন (Login)';
+        $portalBadge = $siteTitle;
+        $portalTitle = 'Customer Login';
+        $welcomeText = 'Beep boop. Who goes there?';
+    }
+@endphp
+@extends('layouts.auth.app')
+
+@section('title', $pageTitle . ' - ' . $siteTitle)
+
+@section('content')
+
+<style>
+/* Login Robot Theme - Volt Interactive 3D */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --paper: #f4efe5;
+  --ink: #23252d;
+  --accent: #ff6b4b;
+  --accent-deep: #e5532f;
+  --teal: #2ec4b6;
+  --yellow: #ffc53d;
+  --shell: #fffdf8;
+  --screen: #23252d;
+  --eye: #fffdf8;
+  --muted: #9a948a;
+  --field: #faf7f0;
+  --line: 2px solid var(--ink);
+  --turn: .65s cubic-bezier(.5, -0.3, .25, 1.35);
+}
+
+* { box-sizing: border-box; }
+
+body, body.hold-transition {
+  font-family: 'Sora', 'Segoe UI', system-ui, sans-serif !important;
+  color: var(--ink) !important;
+  background-color: var(--paper) !important;
+  background-image: radial-gradient(rgba(35, 37, 45, .08) 1.2px, transparent 1.3px) !important;
+  background-size: 24px 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh !important;
+  overflow-x: hidden;
+}
+
+.scene {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 100px 20px 60px;
+  position: relative;
+  width: 100%;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Robot */
+.robot {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -16px;
+  animation: float 4s ease-in-out infinite alternate;
+  perspective: 800px;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-5px); }
+}
+
+/* Antenna */
+.antenna {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.antenna-rod {
+  width: 4px;
+  height: 22px;
+  background: var(--ink);
+  border-radius: 2px;
+}
+
+.antenna-tip {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: var(--line);
+  order: -1;
+  margin-bottom: -2px;
+  position: relative;
+  animation: bob 2.4s ease-in-out infinite;
+}
+
+.antenna-tip::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .85);
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2.5px); }
+}
+
+.robot[data-mood="excited"] .antenna-tip { animation-duration: .4s; background: var(--yellow); }
+.robot[data-mood="success"] .antenna-tip { background: var(--teal); }
+
+/* Head 3D */
+.head3d {
+  width: 152px;
+  height: 140px;
+  perspective: 700px;
+  transform-style: preserve-3d;
+  transform:
+    translateY(var(--hy, 0px))
+    scale(var(--hsc, 1))
+    rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg));
+  transition: transform .25s ease-out;
+  will-change: transform;
+}
+
+.is-hyped .head3d { --hy: 5px; --hsc: 1.04; }
+.is-pressed .head3d { --hy: 9px; --hsc: .94; }
+
+.head {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--turn);
+}
+
+.is-turned .head { transform: rotateY(180deg); }
+.is-spinning .head { animation: victory .9s ease-in-out; }
+
+@keyframes victory { to { transform: rotateY(360deg); } }
+
+.ear {
+  position: absolute;
+  top: 48px;
+  width: 16px;
+  height: 40px;
+  background: var(--shell);
+  border: var(--line);
+  border-radius: 8px;
+  transform: translateZ(0);
+}
+
+.ear--l { left: -10px; }
+.ear--r { right: -10px; }
+
+.face {
+  position: absolute;
+  inset: 0;
+  border-radius: 34px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--shell);
+  border: var(--line);
+}
+
+.face--front { box-shadow: 5px 6px 0 rgba(35, 37, 45, .16); }
+.face--back {
+  box-shadow: 5px 6px 0 rgba(35, 37, 45, .16);
+  transform: rotateY(180deg);
+  display: grid;
+  place-items: center;
+}
+
+/* Face Visor */
+.visor {
+  position: absolute;
+  inset: 22px 16px 20px;
+  background: var(--screen);
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  overflow: hidden;
+}
+
+.eyes {
+  display: flex;
+  gap: 28px;
+  transform: translate(var(--lx, 0px), var(--ly, 0px));
+  transition: transform .18s ease-out;
+}
+
+.eyes.blink .eye { transform: scaleY(.08); }
+
+.eye {
+  width: 19px;
+  height: 25px;
+  border-radius: 9px;
+  background: var(--eye);
+  transition: all .22s ease;
+}
+
+/* Mood Eyes */
+[data-mood="happy"] .eye,
+[data-mood="success"] .eye {
+  width: 25px;
+  height: 12px;
+  background: transparent;
+  border: 5px solid var(--eye);
+  border-bottom: none;
+  border-radius: 25px 25px 0 0;
+}
+
+[data-mood="excited"] .eye {
+  transform: scale(1.2);
+  border-radius: 50%;
+  height: 21px;
+}
+
+[data-mood="pressed"] .eye {
+  width: 24px;
+  height: 12px;
+  background: transparent;
+  border: 5px solid var(--eye);
+  border-top: none;
+  border-radius: 0 0 24px 24px;
+}
+
+.cheek {
+  position: absolute;
+  top: 59%;
+  width: 15px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+.cheek--l { left: 15px; }
+.cheek--r { right: 15px; }
+
+[data-mood="happy"] .cheek,
+[data-mood="excited"] .cheek,
+[data-mood="pressed"] .cheek,
+[data-mood="success"] .cheek { opacity: .9; }
+
+.mouth {
+  width: 15px;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--eye);
+  transition: all .25s ease;
+}
+
+[data-mood="watching"] .mouth { width: 9px; height: 9px; border-radius: 50%; }
+[data-mood="happy"] .mouth { width: 30px; height: 12px; border-radius: 0 0 16px 16px; }
+[data-mood="excited"] .mouth { width: 22px; height: 16px; border-radius: 0 0 13px 13px; }
+[data-mood="pressed"] .mouth { width: 27px; height: 15px; border-radius: 0 0 14px 14px; }
+[data-mood="success"] .mouth { width: 38px; height: 17px; border-radius: 0 0 20px 20px; }
+
+/* Back of Head + Password Meter */
+.panel {
+  width: 116px;
+  padding: 12px 10px 10px;
+  background: var(--screen);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-lights { display: flex; gap: 6px; }
+.panel-lights i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: bob 1.8s ease-in-out infinite;
+}
+.panel-lights i:nth-child(2) { animation-delay: .3s; background: var(--yellow); }
+.panel-lights i:nth-child(3) { animation-delay: .6s; background: var(--teal); }
+
+.meter { display: flex; gap: 5px; }
+.meter i {
+  width: 15px;
+  height: 20px;
+  border-radius: 4px;
+  background: #3b3e49;
+  transition: background .25s ease;
+}
+
+.meter[data-lvl="1"] i.on { background: #ff5c4d; }
+.meter[data-lvl="2"] i.on { background: #ff9f43; }
+.meter[data-lvl="3"] i.on { background: var(--yellow); }
+.meter[data-lvl="4"] i.on { background: var(--teal); }
+
+.panel-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--paper);
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Speech Bubble */
+.bubble {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--shell);
+  border: var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 9px 14px;
+  border-radius: 12px;
+  width: max-content;
+  max-width: 270px;
+  text-align: center;
+  box-shadow: 3px 3px 0 rgba(35, 37, 45, .9);
+  z-index: 3;
+}
+
+.bubble::after {
+  content: '';
+  position: absolute;
+  top: calc(100% - 5px);
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--shell);
+  border-right: var(--line);
+  border-bottom: var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.bubble.pop { animation: pop .3s cubic-bezier(.34, 1.56, .64, 1); }
+
+@keyframes pop {
+  from { transform: translateX(-50%) scale(.8); }
+  to   { transform: translateX(-50%) scale(1); }
+}
+
+/* Form Card */
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(165deg, #fffefb 0%, #fdfaf3 45%, #f7f1e4 100%);
+  border: var(--line);
+  border-radius: 20px;
+  padding: 34px 26px 36px;
+  box-shadow: 8px 9px 0 rgba(35, 37, 45, .9);
+  box-sizing: border-box;
+}
+
+.hand {
+  position: absolute;
+  top: -16px;
+  width: 44px;
+  height: 32px;
+  background:
+    linear-gradient(90deg, transparent 31%, rgba(35, 37, 45, .9) 32%, rgba(35, 37, 45, .9) 36%, transparent 37%, transparent 63%, rgba(35, 37, 45, .9) 64%, rgba(35, 37, 45, .9) 68%, transparent 69%) 0 12px / 100% calc(100% - 12px) no-repeat,
+    var(--shell);
+  border: var(--line);
+  border-radius: 9px 9px 14px 14px;
+  z-index: 3;
+  transition: transform .25s ease;
+}
+
+.hand--l { left: 36px; }
+.hand--r { right: 36px; }
+.is-hyped ~ .card .hand { transform: translateY(-3px) scaleY(1.08); }
+
+.foot {
+  position: absolute;
+  bottom: -26px;
+  width: 54px;
+  height: 34px;
+  background: var(--shell);
+  border: var(--line);
+  border-radius: 9px 9px 14px 14px;
+  box-shadow: inset 0 -9px 0 rgba(35, 37, 45, .12);
+  z-index: -1;
+}
+
+.foot--l { left: 62px; }
+.foot--r { right: 62px; }
+
+/* Brand Badge */
+.brand-badge-box {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(35, 37, 45, 0.05);
+  border: 1.5px solid rgba(35, 37, 45, 0.15);
+  padding: 4px 13px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.2px;
+}
+
+.brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 6px var(--teal);
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+/* Alert Boxes */
+.alert-box {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  border: var(--line);
+  box-shadow: 2px 2px 0 rgba(35, 37, 45, 0.9);
+}
+
+.alert-box--error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #dc2626;
+}
+
+.alert-box--success {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #059669;
+}
+
+/* Field */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 14px;
+  margin-bottom: 14px;
+  background: var(--field);
+  border: 2px solid rgba(35, 37, 45, .22);
+  border-radius: 12px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  cursor: text;
+  box-sizing: border-box;
+}
+
+.field:focus-within {
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--accent);
+  transform: translate(-1px, -1px);
+}
+
+.field--error {
+  border-color: #ef4444 !important;
+  background: #fff5f5 !important;
+}
+
+.field-icon {
+  width: 19px;
+  height: 19px;
+  fill: var(--muted);
+  flex: none;
+  transition: fill .18s ease;
+}
+
+.field:focus-within .field-icon { fill: var(--ink); }
+
+.field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field input::placeholder { color: var(--muted); font-weight: 500; font-size: 13.5px; }
+
+.peek {
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+
+.peek svg { width: 20px; height: 20px; fill: var(--muted); transition: fill .18s ease; }
+.peek:hover svg, .peek[aria-pressed="true"] svg { fill: var(--ink); }
+.peek:focus-visible { outline: 2px solid var(--ink); }
+
+/* Card Options (Remember & Forgot) */
+.card-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 16px;
+  font-size: 12.5px;
+}
+
+.remember-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+  user-select: none;
+  margin: 0;
+}
+
+.remember-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.forgot-link {
+  color: var(--accent-deep);
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .18s;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  opacity: .85;
+}
+
+/* Login Button */
+.btn {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  margin-top: 6px;
+  border: var(--line);
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 4px 5px 0 rgba(35, 37, 45, .9);
+  transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), box-shadow .18s ease, background .25s ease;
+}
+
+.btn:hover, .btn:focus-visible {
+  transform: translate(-2px, -2px);
+  background: var(--accent-deep);
+  box-shadow: 7px 8px 0 rgba(35, 37, 45, .9);
+}
+
+.btn:active {
+  transform: translate(3px, 4px);
+  box-shadow: 0 0 0 rgba(35, 37, 45, .9);
+}
+
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.btn-bolt {
+  display: inline-block;
+  opacity: 0;
+  transform: translateX(-10px) scale(.4) rotate(-30deg);
+  transition: all .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.btn:hover .btn-bolt, .btn:focus-visible .btn-bolt {
+  opacity: 1;
+  transform: none;
+  animation: bolt-jitter .4s ease-in-out infinite;
+}
+
+@keyframes bolt-jitter {
+  0%, 100% { transform: rotate(-7deg) scale(1); }
+  50%      { transform: rotate(7deg) scale(1.2); }
+}
+
+.btn.is-success { background: var(--teal); }
+
+/* Card Shake */
+.card.shake { animation: shake .4s ease; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+
+/* Confetti */
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Card Footer Links */
+.volt-footer {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 2px dashed rgba(35, 37, 45, 0.15);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.volt-signup-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
+
+.volt-link {
+  color: var(--accent-deep);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.volt-link:hover { text-decoration: underline; }
+
+.supplier-btn-badge {
+  display: inline-block;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(46, 196, 182, 0.12);
+  border: 1.5px solid var(--teal);
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .2s ease;
+  box-sizing: border-box;
+}
+
+.supplier-btn-badge:hover {
+  background: var(--teal);
+  color: #ffffff;
+}
+
+.home-return-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity .18s;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.home-return-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* Responsive & Accessibility */
+@media (max-width: 560px) {
+  .scene { padding-top: 80px; padding-left: 14px; padding-right: 14px; }
+  .bubble { max-width: 220px; font-size: 12px; }
+  .card { padding: 30px 20px 32px; }
+  .foot--l { left: 45px; }
+  .foot--r { right: 45px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robot { animation: none; }
+  .antenna-tip, .panel-lights i { animation: none; }
+  .head { transition-duration: .01s; }
+  .btn:hover .btn-bolt { animation: none; }
+  .is-spinning .head { animation: none; }
+  .bubble.pop { animation: none; }
+  .eyes { transition: none; }
+}
+</style>
+
+@php
+    $currentPath = trim(request()->path(), '/');
+    $isAdmin = request()->routeIs('admin*') || request()->is('admin*') || str_starts_with($currentPath, 'admin') || request()->get('portal') === 'admin' || request()->get('role') === 'admin';
+    $isSupplier = request()->routeIs('supplier*') || request()->is('supplier*') || str_starts_with($currentPath, 'supplier') || request()->get('portal') === 'supplier' || request()->get('role') === 'supplier';
+    $isEmployee = request()->routeIs('employee*') || request()->is('employee*') || str_starts_with($currentPath, 'employee') || request()->get('portal') === 'employee' || request()->get('role') === 'employee';
+    $isAgent = request()->routeIs('agent*') || request()->is('agent*') || str_starts_with($currentPath, 'agent') || request()->get('portal') === 'agent' || request()->get('role') === 'agent';
+
+    if ($isAdmin) {
+        $portalBadge = 'Admin Security Portal';
+        $portalTitle = 'Admin Login';
+        $welcomeText = 'Admin Access. State credentials.';
+    } elseif ($isSupplier) {
+        $portalBadge = 'Supplier Partner Portal';
+        $portalTitle = 'Supplier Portal Login';
+        $welcomeText = 'Supplier Partner. State credentials.';
+    } elseif ($isEmployee) {
+        $portalBadge = 'Staff & Employee Portal';
+        $portalTitle = 'Employee Login';
+        $welcomeText = 'Employee Access. State credentials.';
+    } elseif ($isAgent) {
+        $portalBadge = 'Agent Portal';
+        $portalTitle = 'Agent Login';
+        $welcomeText = 'Agent Access. State credentials.';
+    } else {
+        $portalBadge = setting('title') ?: 'Jamuna Stock Market PLC';
+        $portalTitle = 'Customer Login';
+        $welcomeText = 'Beep boop. Who goes there?';
+    }
+@endphp
+
+<div class="scene">
+  <main class="stage" id="stage">
+
+    <!-- Robot Character -->
+    <div class="robot" id="robot" data-mood="idle">
+
+      <div class="bubble" id="bubble" role="status" aria-live="polite">
+        <span id="bubbleText">{{ $welcomeText }}</span>
+      </div>
+
+      <div class="antenna" aria-hidden="true">
+        <span class="antenna-rod"></span>
+        <span class="antenna-tip"></span>
+      </div>
+
+      <div class="head3d" aria-hidden="true">
+        <div class="head" id="head">
+          <span class="ear ear--l"></span>
+          <span class="ear ear--r"></span>
+
+          <!-- Front Face -->
+          <div class="face face--front">
+            <div class="visor">
+              <div class="eyes" id="eyes">
+                <span class="eye eye--l"></span>
+                <span class="eye eye--r"></span>
+              </div>
+              <span class="cheek cheek--l"></span>
+              <span class="cheek cheek--r"></span>
+              <span class="mouth"></span>
+            </div>
+          </div>
+
+          <!-- Back Face (NOT LOOKING Panel) -->
+          <div class="face face--back">
+            <div class="panel">
+              <span class="panel-lights"><i></i><i></i><i></i></span>
+              <div class="meter" id="meter">
+                <i></i><i></i><i></i><i></i>
+              </div>
+              <p class="panel-label" id="panelLabel">NOT LOOKING</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Card Form -->
+    <form class="card" id="form" method="POST" action="{{ route('login') }}" novalidate>
+      @csrf
+
+      <span class="hand hand--l" aria-hidden="true"></span>
+      <span class="hand hand--r" aria-hidden="true"></span>
+
+      <!-- Brand Header Tag -->
+      <div class="brand-badge-box">
+        <span class="brand-badge">
+          <span class="brand-dot"></span> {{ $portalBadge }}
+        </span>
+      </div>
+
+      <h1 class="title" style="margin-bottom: 3px;">{{ setting('title') ?: 'JAMUNA STOCK MARKET PLC' }}</h1>
+      <p style="font-size: 13.5px; font-weight: 700; color: var(--muted); margin: 0 0 20px 0; text-align: center;">{{ $portalTitle }}</p>
+
+      <!-- Flash & Error Messages -->
+      @if(session('success'))
+        <div class="alert-box alert-box--success">
+          {{ session('success') }}
+        </div>
+      @endif
+
+      @if($errors->any())
+        <div class="alert-box alert-box--error" id="laravelErrorBox">
+          {{ $errors->first() }}
+        </div>
+      @endif
+
+      <!-- Identifier Field (Mobile Number / Username / Email) -->
+      <label class="field @error('username') field--error @enderror" for="login_input">
+        <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-3.9 0-8 2-8 5v1.5h16V19c0-3-4.1-5-8-5Z"/>
+        </svg>
+        <input id="login_input" name="username" type="text" value="{{ old('username') }}"
+               placeholder="Mobile, Username or Email" autocomplete="username"
+               aria-label="Mobile, Username or Email" required autofocus>
+      </label>
+
+      <!-- Password Field -->
+      <label class="field @error('password') field--error @enderror" for="password">
+        <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 0 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.7V19h-2v-1.3a2 2 0 0 1 1-3.7Z"/>
+        </svg>
+        <input id="password" name="password" type="password"
+               placeholder="Super secret password" autocomplete="current-password"
+               aria-label="Password" required>
+        <button class="peek" id="togglePass" type="button" aria-label="Show password" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5c-5 0-9.3 3.1-11 7.5C2.7 16.9 7 20 12 20s9.3-3.1 11-7.5C21.3 8.1 17 5 12 5Zm0 12.5a5 5 0 1 1 5-5 5 5 0 0 1-5 5Zm0-8a3 3 0 1 0 3 3 3 3 0 0 0-3-3Z"/>
+          </svg>
+        </button>
+      </label>
+
+      <!-- Remember Me & Forgot Password -->
+      <div class="card-options">
+        <label class="remember-label" for="remember">
+          <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+          <span>Remember Me</span>
+        </label>
+        @if (Route::has('password.request'))
+          <a href="{{ route('password.request') }}" class="forgot-link">Forgot Password?</a>
+        @endif
+      </div>
+
+      <!-- Submit Button -->
+      <button class="btn" id="loginBtn" type="submit">
+        <span class="btn-bolt" aria-hidden="true">⚡</span>
+        <span class="btn-label" id="btnLabel">LOG ME IN</span>
+      </button>
+
+      <!-- Feet -->
+      <span class="foot foot--l" aria-hidden="true"></span>
+      <span class="foot foot--r" aria-hidden="true"></span>
+
+      <!-- Footer & Portal Links -->
+      <div class="volt-footer">
+        @if($isAdmin)
+          <!-- Admin Portal: Strictly No Sign Up, No Supplier, No Back Button -->
+          <div style="margin-top: 15px; font-size: 12px; color: var(--muted); opacity: 0.85; text-align: center;">
+            🔒 Authorized Administrative Access Only
+          </div>
+        @elseif($isSupplier)
+          <!-- Supplier Portal Login -->
+          <p class="volt-signup-text">
+            Don't have a Supplier account? <a href="{{ route('supplier.register') }}" class="volt-link">Register Here</a>
+          </p>
+          <div>
+            <a href="{{ url('/') }}" class="home-return-link">
+              ← Back to Home
+            </a>
+          </div>
+        @elseif($isEmployee || $isAgent)
+          <!-- Employee / Agent Login -->
+          <div>
+            <a href="{{ url('/') }}" class="home-return-link">
+              ← Back to Home
+            </a>
+          </div>
+        @else
+          <!-- Customer Login -->
+          <p class="volt-signup-text">
+            Don't have a Customer account? <a href="{{ route('register') }}" class="volt-link">Sign Up Here</a>
+          </p>
+          <div>
+            <a href="{{ route('supplier.register') }}" class="supplier-btn-badge">
+              🚚 Supplier Registration
+            </a>
+          </div>
+          <div>
+            <a href="{{ url('/') }}" class="home-return-link">
+              ← Back to Home
+            </a>
+          </div>
+        @endif
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+// Volt Robot Interactive Experience
+document.addEventListener('DOMContentLoaded', function () {
+  const $ = (s) => document.querySelector(s);
+
+  const robot = $('#robot');
+  const stage = $('#stage');
+  const eyes = $('#eyes');
+  const bubble = $('#bubble');
+  const bubbleText = $('#bubbleText');
+  const meter = $('#meter');
+  const meterBars = [...meter.children];
+  const panelLabel = $('#panelLabel');
+  const form = $('#form');
+  const loginI = $('#login_input');
+  const passI = $('#password');
+  const peekBtn = $('#togglePass');
+  const btn = $('#loginBtn');
+  const btnLabel = $('#btnLabel');
+  const head3d = $('.head3d');
+  const errorBox = $('#laravelErrorBox');
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const PHONE_RE = /^(\+?88)?01[3-9]\d{8}$/;
+
+  let done = false;
+  let lastSaid = '';
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  function setMood(mood) {
+    if (!done) robot.dataset.mood = mood;
+  }
+
+  function say(text) {
+    if (text === lastSaid) return;
+    lastSaid = text;
+    bubbleText.textContent = text;
+    bubble.classList.remove('pop');
+    void bubble.offsetWidth;
+    bubble.classList.add('pop');
+  }
+
+  function look(x, y) {
+    eyes.style.setProperty('--lx', `${x}px`);
+    eyes.style.setProperty('--ly', `${y}px`);
+  }
+
+  function tilt(ry, rx) {
+    head3d.style.setProperty('--ry', `${ry}deg`);
+    head3d.style.setProperty('--rx', `${rx}deg`);
+  }
+
+  function followTyping(input) {
+    const ratio = Math.min(input.value.length / 22, 1);
+    look(-6 + 12 * ratio, 5);
+    tilt(-5 + 10 * ratio, -8);
+  }
+
+  function turnAway(on) {
+    robot.classList.toggle('is-turned', on);
+  }
+
+  // Initial check for Laravel validation errors
+  if (errorBox) {
+    setMood('watching');
+    say('Access check failed. Verify credentials!');
+    form.classList.add('shake');
+  }
+
+  // Login Input (Username / Mobile / Email)
+  loginI.addEventListener('focus', () => {
+    turnAway(false);
+    setMood('watching');
+    say(pick([
+      "A visitor. State your credentials.",
+      "Typing detected. Go on, I'm watching."
+    ]));
+    followTyping(loginI);
+  });
+
+  loginI.addEventListener('input', () => {
+    followTyping(loginI);
+    const v = loginI.value.trim();
+    if (EMAIL_RE.test(v)) {
+      setMood('happy');
+      say(pick(['Valid email detected. Quietly delighted.', 'Proper email format. Respect.']));
+    } else if (PHONE_RE.test(v.replace(/[- ]/g, ''))) {
+      setMood('happy');
+      say('Mobile number recognized. Ready to connect.');
+    } else if (v.length >= 3) {
+      setMood('happy');
+      say(`${v}. Solid name. Filed and verified.`);
+    } else if (v.length === 0) {
+      setMood('idle');
+      say("Deleted. I've already forgotten it. Mostly.");
+    }
+  });
+
+  // Password Input - Head turns completely around
+  passI.addEventListener('focus', () => {
+    setMood('shy');
+    turnAway(true);
+    look(0, 0);
+    tilt(0, 0);
+    say("A secret? Say no more. *turns around*");
+    panelLabel.textContent = 'NOT LOOKING';
+  });
+
+  passI.addEventListener('blur', (e) => {
+    if (e.relatedTarget === peekBtn) return;
+    turnAway(false);
+  });
+
+  passI.addEventListener('input', () => {
+    const v = passI.value;
+    let score = 0;
+    if (v.length >= 6) score++;
+    if (/[a-z]/.test(v) && /[A-Z]/.test(v)) score++;
+    if (/\d/.test(v)) score++;
+    if (/[^a-zA-Z0-9]/.test(v) || v.length >= 10) score++;
+    if (v.length > 0 && score === 0) score = 1;
+
+    meter.dataset.lvl = score;
+    meterBars.forEach((bar, i) => bar.classList.toggle('on', i < score));
+    panelLabel.textContent = v.length === 0
+      ? 'NOT LOOKING'
+      : ['NOT LOOKING', 'TOO SHORT', 'GETTING THERE', 'STRONG', 'FORT KNOX'][score];
+  });
+
+  // Show / Hide Password Peek
+  peekBtn.addEventListener('click', () => {
+    const show = passI.type === 'password';
+    passI.type = show ? 'text' : 'password';
+    peekBtn.setAttribute('aria-pressed', String(show));
+    peekBtn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    if (show) say("Revealing it? Good thing I'm facing the wall.");
+    passI.focus();
+  });
+
+  // Button Hover / Hype
+  function hype(on) {
+    if (done) return;
+    if (on && robot.classList.contains('is-pressed')) return;
+    robot.classList.toggle('is-hyped', on);
+    if (on) {
+      turnAway(false);
+      setMood('excited');
+      say(pick(['Ooh. Do it. Press it.', 'This is my favorite part.']));
+    } else {
+      setMood('idle');
+      say('The button misses you already.');
+    }
+  }
+
+  btn.addEventListener('mouseenter', () => hype(true));
+  btn.addEventListener('mouseleave', () => hype(false));
+  btn.addEventListener('focus', () => hype(true));
+  btn.addEventListener('blur', () => hype(false));
+
+  // Closed happy eyes on click press
+  let pressTimer;
+  btn.addEventListener('pointerdown', () => {
+    clearTimeout(pressTimer);
+    robot.classList.add('is-pressed');
+    robot.dataset.mood = 'pressed';
+    say(pick(['Ahh. That’s the stuff.', 'Mmm. Satisfying.', 'Beep. Checking credentials...']));
+  });
+
+  function releasePress() {
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      robot.classList.remove('is-pressed');
+      if (robot.dataset.mood === 'pressed') {
+        robot.dataset.mood = done ? 'success' : 'excited';
+      }
+    }, 340);
+  }
+
+  btn.addEventListener('pointerup', releasePress);
+  btn.addEventListener('pointercancel', releasePress);
+  btn.addEventListener('pointerleave', () => {
+    if (robot.classList.contains('is-pressed')) releasePress();
+  });
+
+  // Form Submit
+  form.addEventListener('submit', (e) => {
+    if (done) return; // allow submission to proceed
+
+    const complaints = [];
+    if (!loginI.value.trim()) {
+      complaints.push(["Still don't know who you are.", loginI]);
+    } else if (!passI.value) {
+      complaints.push(['A password would help.', passI]);
+    }
+
+    if (complaints.length) {
+      e.preventDefault();
+      const [msg, field] = complaints[0];
+      setTimeout(() => { say(msg); setMood('watching'); }, 380);
+      form.classList.remove('shake');
+      void form.offsetWidth;
+      form.classList.add('shake');
+      field.focus();
+      return;
+    }
+
+    // Validation passed -> Play victory sequence, then submit to Laravel backend!
+    e.preventDefault();
+    done = true;
+    turnAway(false);
+    robot.classList.remove('is-hyped');
+
+    setTimeout(() => {
+      robot.dataset.mood = 'success';
+      say(`Access granted. Logging you in...`);
+      btn.classList.add('is-success');
+      btnLabel.textContent = 'ACCESS GRANTED ✓';
+      look(0, 0);
+      tilt(0, 0);
+
+      if (!reduceMotion) {
+        robot.classList.add('is-spinning');
+        setTimeout(() => robot.classList.remove('is-spinning'), 950);
+        confetti();
+      }
+
+      // Submit the form to Laravel backend
+      setTimeout(() => {
+        form.submit();
+      }, 700);
+    }, 380);
+  });
+
+  // Natural Blinking Loop
+  (function blinkLoop() {
+    setTimeout(() => {
+      if (robot.dataset.mood !== 'success' && !robot.classList.contains('is-turned')) {
+        eyes.classList.add('blink');
+        setTimeout(() => eyes.classList.remove('blink'), 150);
+      }
+      blinkLoop();
+    }, 2600 + Math.random() * 2600);
+  })();
+
+  // Mouse Tracking
+  let rafPending = false;
+  document.addEventListener('mousemove', (e) => {
+    const active = document.activeElement;
+    if (done || (active && active.tagName === 'INPUT')) return;
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      const rect = robot.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / 260));
+      const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / 260));
+      look(dx * 7, dy * 6);
+      if (!robot.classList.contains('is-turned')) tilt(dx * 12, -dy * 9);
+    });
+  });
+
+  // Confetti Explosion
+  function confetti() {
+    const colors = ['#ff6b4b', '#2ec4b6', '#ffc53d', '#23252d', '#fffdf8'];
+    const origin = btn.getBoundingClientRect();
+    const host = document.querySelector('.scene');
+    const hostRect = host.getBoundingClientRect();
+    const ox = origin.left - hostRect.left + origin.width / 2;
+    const oy = origin.top - hostRect.top;
+
+    for (let i = 0; i < 70; i++) {
+      const bit = document.createElement('span');
+      bit.className = 'confetti';
+      bit.style.background = pick(colors);
+      if (Math.random() > .5) bit.style.borderRadius = '50%';
+      host.appendChild(bit);
+
+      const angle = -Math.PI / 2 + (Math.random() - .5) * 1.6;
+      const speed = 240 + Math.random() * 380;
+      const tx = Math.cos(angle) * speed;
+      const ty = Math.sin(angle) * speed;
+
+      bit.animate(
+        [
+          { transform: `translate(${ox}px, ${oy}px) rotate(0deg) scale(1)`, opacity: 1 },
+          { transform: `translate(${ox + tx}px, ${oy + ty + 320}px) rotate(${540 * (Math.random() > .5 ? 1 : -1)}deg) scale(.6)`, opacity: 0 }
+        ],
+        { duration: 1100 + Math.random() * 700, easing: 'cubic-bezier(.15,.6,.35,1)' }
+      ).onfinish = function () { bit.remove(); };
+    }
+  }
+});
+</script>
+
+@endsection

@@ -1,0 +1,916 @@
+/* ==========================================================================
+   Onedash Inspired Ultra-Modern Responsive Admin Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --admin-font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --bg-main: #f7f8fa;
+    --bg-card: #ffffff;
+    --sidebar-width: 280px;
+
+    /* Onedash Royal Blue Theme */
+    --accent-color: #3461ff;
+    --accent-dark: #254ee0;
+    --accent-light: #eff4ff;
+    --accent-glow: rgba(52, 97, 255, 0.22);
+    --banner-gradient: linear-gradient(135deg, #3461ff 0%, #254ee0 60%, #1e40af 100%);
+    --sidebar-active-bg: #eff4ff;
+    --sidebar-active-text: #3461ff;
+
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #eff2f6;
+    --border-color-light: #f8fafc;
+    --header-height: 65px;
+}
+
+body,
+html {
+    font-family: var(--admin-font) !important;
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary) !important;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden !important;
+}
+
+.wrapper {
+    background-color: var(--bg-main) !important;
+    overflow-x: hidden !important;
+    position: relative !important;
+}
+
+/* ==========================================================================
+   1. Onedash Clean White Top Header & Navbar
+   ========================================================================== */
+.main-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    box-shadow: 0 1px 4px 0 rgba(220, 226, 236, 0.4) !important;
+    height: var(--header-height) !important;
+    z-index: 1030 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+}
+
+.main-header .logo-box {
+    width: var(--sidebar-width) !important;
+    height: var(--header-height) !important;
+    background: #ffffff !important;
+    border-right: 1px solid var(--border-color) !important;
+    padding: 0 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    float: left !important;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.onedash-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-decoration: none !important;
+    color: #1e293b !important;
+}
+
+.onedash-logo-icon {
+    width: 32px !important;
+    height: 32px !important;
+    color: var(--accent-color) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.onedash-brand-name {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+    color: var(--accent-color) !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+.onedash-hamburger-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #334155 !important;
+    font-size: 20px !important;
+    cursor: pointer !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.2s ease !important;
+}
+
+.onedash-hamburger-btn:hover {
+    background: #f1f5f9 !important;
+    color: var(--accent-color) !important;
+}
+
+.main-header .navbar {
+    margin-left: 0 !important;
+    border: none !important;
+    padding: 0 20px !important;
+    background: transparent !important;
+    min-height: var(--header-height) !important;
+    flex-grow: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+/* Onedash Search Box */
+.onedash-search-box {
+    position: relative !important;
+    width: 280px !important;
+}
+
+.onedash-search-box i {
+    position: absolute !important;
+    left: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #94a3b8 !important;
+    font-size: 14px !important;
+}
+
+.onedash-search-box input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 8px 16px 8px 38px !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    font-size: 13.5px !important;
+    transition: all 0.2s ease !important;
+}
+
+.onedash-search-box input:focus {
+    background: #ffffff !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+    outline: none !important;
+}
+
+.onedash-search-box input::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Onedash Header Right Action Icons */
+.onedash-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.onedash-nav-icon-link {
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    color: #475569 !important;
+    text-decoration: none !important;
+    position: relative !important;
+    font-size: 16px !important;
+    transition: all 0.2s ease !important;
+    background: transparent !important;
+}
+
+.onedash-nav-icon-link:hover {
+    background: #f1f5f9 !important;
+    color: var(--accent-color) !important;
+}
+
+.onedash-badge-count {
+    position: absolute !important;
+    top: -2px !important;
+    right: -2px !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 1px 5px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid #ffffff !important;
+}
+
+/* Onedash Header User Profile Widget */
+.onedash-user-profile {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 4px 8px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    transition: background 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.onedash-user-profile:hover {
+    background: #f8fafc !important;
+}
+
+.onedash-avatar-img {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.onedash-user-info {
+    text-align: left !important;
+    line-height: 1.25 !important;
+}
+
+.onedash-user-name {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    display: block !important;
+}
+
+.onedash-user-role {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    display: block !important;
+}
+
+/* ==========================================================================
+   2. Onedash Pure White Sidebar System
+   ========================================================================== */
+.main-sidebar {
+    width: var(--sidebar-width) !important;
+    background: #ffffff !important;
+    border-right: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+    padding-top: var(--header-height) !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1020 !important;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.main-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.main-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+}
+
+.sidebar-menu {
+    padding: 10px 0 40px 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.sidebar-menu>li {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+/* Onedash Category Headers (e.g. UI ELEMENTS, FORMS & TABLES, PAGES) */
+.sidebar-menu>li.header {
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: #94a3b8 !important;
+    background: transparent !important;
+    padding: 18px 20px 6px 20px !important;
+    margin: 0 !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+/* Onedash Sidebar Menu Items */
+.sidebar-menu>li>a {
+    padding: 10px 16px !important;
+    margin: 2px 10px !important;
+    border-radius: 8px !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-size: 13.5px !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: calc(100% - 20px) !important;
+    box-sizing: border-box !important;
+}
+
+.sidebar-menu>li>a i:first-child {
+    font-size: 16px !important;
+    margin-right: 12px !important;
+    color: #64748b !important;
+    transition: color 0.2s ease !important;
+}
+
+.sidebar-menu>li>a:hover {
+    background: #f8fafc !important;
+    color: var(--accent-color) !important;
+}
+
+.sidebar-menu>li>a:hover i:first-child {
+    color: var(--accent-color) !important;
+}
+
+/* Onedash Active Menu Item (Vibrant Royal Blue with Soft Background) */
+.sidebar-menu>li.menu-open>a,
+.sidebar-menu>li.active>a {
+    background: #eff4ff !important;
+    color: var(--accent-color) !important;
+    font-weight: 700 !important;
+}
+
+.sidebar-menu>li.menu-open>a i:first-child,
+.sidebar-menu>li.active>a i:first-child {
+    color: var(--accent-color) !important;
+}
+
+.sidebar-menu>li>a>span {
+    flex-grow: 1 !important;
+}
+
+/* Onedash Submenu styling */
+.sidebar-menu .treeview-menu,
+.sidebar-menu ul.treeview-menu {
+    background: #ffffff !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 4px 0 4px 28px !important;
+    border: none !important;
+    width: 100% !important;
+}
+
+.sidebar-menu .treeview-menu>li>a,
+.sidebar-menu ul.treeview-menu>li>a,
+.sidebar-menu .treeview-menu li a {
+    padding: 7px 12px !important;
+    border-radius: 6px !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 1px 10px 1px 0 !important;
+}
+
+.sidebar-menu .treeview-menu>li>a:hover,
+.sidebar-menu ul.treeview-menu>li>a:hover,
+.sidebar-menu .treeview-menu li a:hover {
+    background: #f8fafc !important;
+    color: var(--accent-color) !important;
+    padding-left: 16px !important;
+}
+
+.sidebar-menu .treeview-menu>li.active>a {
+    color: var(--accent-color) !important;
+    font-weight: 700 !important;
+}
+
+/* Right Chevron Indicator */
+.sidebar-menu .pull-right-container {
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+}
+
+.sidebar-menu .pull-right-container .fa-angle-right,
+.sidebar-menu .pull-right-container .fa-angle-left {
+    transition: transform 0.2s ease !important;
+}
+
+.sidebar-menu .menu-open>a .pull-right-container .fa-angle-right,
+.sidebar-menu .menu-open>a .pull-right-container .fa-angle-left {
+    transform: rotate(90deg) !important;
+}
+
+/* High specificity layout overrides for Content Wrapper */
+body.skin-blue .content-wrapper,
+body.skin-blue-light .content-wrapper,
+body .wrapper .content-wrapper,
+body.skin-blue .main-footer,
+body.skin-blue-light .main-footer,
+body .wrapper .main-footer,
+.content-wrapper,
+.main-footer {
+    margin-left: var(--sidebar-width) !important;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: var(--bg-main) !important;
+}
+
+body.sidebar-collapse .content-wrapper,
+body.sidebar-collapse .main-footer,
+body.sidebar-collapse .wrapper .content-wrapper,
+body.sidebar-collapse .wrapper .main-footer {
+    margin-left: 70px !important;
+}
+
+.content-wrapper {
+    padding-top: calc(var(--header-height) + 16px) !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+    padding-bottom: 40px !important;
+    box-sizing: border-box !important;
+    min-height: 100vh !important;
+}
+
+.content {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+/* ==========================================================================
+   Universal High-Contrast Badge System (No invisible/matching color text)
+   ========================================================================== */
+.badge.bg-success,
+.badge.badge-success,
+.badge-success {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #10b981 !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+}
+
+.badge.bg-danger,
+.badge.badge-danger,
+.badge-danger {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #ef4444 !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+}
+
+.badge.bg-warning,
+.badge.badge-warning,
+.badge-warning {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #f59e0b !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+}
+
+.badge.bg-info,
+.badge.badge-info,
+.badge-info {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #0ea5e9 !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+}
+
+.badge.bg-primary,
+.badge.badge-primary,
+.badge-primary {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #3b82f6 !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+}
+
+/* ==========================================================================
+   3. Onedash Card Design Components
+   ========================================================================== */
+.onedash-card {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 6px 0 rgba(220, 226, 236, 0.45) !important;
+    padding: 20px !important;
+    height: 100% !important;
+    position: relative !important;
+    transition: box-shadow 0.2s ease !important;
+}
+
+.onedash-card:hover {
+    box-shadow: 0 4px 14px 0 rgba(220, 226, 236, 0.65) !important;
+}
+
+/* Card Header with 3-Dots Menu */
+.onedash-card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 16px !important;
+}
+
+.onedash-card-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.onedash-more-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+}
+
+.onedash-more-btn:hover {
+    color: #1e293b !important;
+    background: #f1f5f9 !important;
+}
+
+/* Row 1: Onedash Top KPI Cards */
+.onedash-kpi-card {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 6px 0 rgba(220, 226, 236, 0.45) !important;
+    padding: 18px 20px !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+}
+
+.onedash-kpi-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+}
+
+.onedash-kpi-label {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+}
+
+.onedash-kpi-trend {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+}
+
+.onedash-kpi-trend.positive {
+    color: #10b981 !important;
+}
+
+.onedash-kpi-trend.negative {
+    color: #ef4444 !important;
+}
+
+.onedash-kpi-bottom {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+}
+
+.onedash-kpi-value {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.5px !important;
+    margin: 0 !important;
+}
+
+.onedash-sparkline-box {
+    width: 100px !important;
+    height: 42px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Row 2: Device Chart Legend */
+.onedash-device-legend {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    justify-content: center !important;
+    padding-left: 10px !important;
+}
+
+.onedash-device-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    font-size: 13.5px !important;
+}
+
+.onedash-device-name {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+}
+
+.onedash-device-percent {
+    font-weight: 700 !important;
+    color: #1e293b !important;
+}
+
+/* Row 3: Split Messages & Posts Card */
+.onedash-split-section {
+    padding: 12px 0 !important;
+}
+
+.onedash-split-section:first-child {
+    padding-top: 0 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding-bottom: 16px !important;
+}
+
+.onedash-split-section:last-child {
+    padding-bottom: 0 !important;
+    padding-top: 16px !important;
+}
+
+/* Floating Accessibility Pill Button on right edge */
+.onedash-floating-accessibility {
+    position: fixed !important;
+    right: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: var(--accent-color) !important;
+    color: #ffffff !important;
+    width: 32px !important;
+    height: 38px !important;
+    border-radius: 8px 0 0 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    box-shadow: -2px 0 8px rgba(52, 97, 255, 0.3) !important;
+    cursor: pointer !important;
+    z-index: 1050 !important;
+}
+
+/* Business & ERP Metric Cards in Onedash Style */
+.onedash-biz-card {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 6px 0 rgba(220, 226, 236, 0.45) !important;
+    padding: 18px 20px !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.onedash-biz-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 16px rgba(220, 226, 236, 0.65) !important;
+}
+
+.onedash-biz-icon-box {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    flex-shrink: 0 !important;
+}
+
+.onedash-biz-label {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    margin-bottom: 4px !important;
+}
+
+.onedash-biz-val {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* Quick Action Buttons in Onedash Style */
+.onedash-action-pill {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 14px 18px !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(220, 226, 236, 0.3) !important;
+    width: 100% !important;
+}
+
+.onedash-action-pill:hover {
+    transform: translateY(-2px) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 6px 14px rgba(52, 97, 255, 0.15) !important;
+    text-decoration: none !important;
+}
+
+.onedash-action-pill-icon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    background: #eff4ff !important;
+    color: var(--accent-color) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    flex-shrink: 0 !important;
+}
+
+.onedash-action-pill-text {
+    font-weight: 700 !important;
+    font-size: 13.5px !important;
+    color: #1e293b !important;
+}
+
+/* Mobile & Tablet Responsiveness */
+@media (max-width: 991.98px) {
+    .main-header .navbar {
+        margin-left: 0 !important;
+        padding: 0 10px !important;
+    }
+
+    .main-header .logo-box {
+        width: 100% !important;
+        float: none !important;
+    }
+
+    .main-sidebar {
+        transform: translateX(-100%) !important;
+        width: 280px !important;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    body.sidebar-open .main-sidebar {
+        transform: translateX(0) !important;
+    }
+
+    body .wrapper .content-wrapper,
+    body.skin-blue .content-wrapper,
+    body.skin-blue-light .content-wrapper,
+    .content-wrapper {
+        margin-left: 0 !important;
+        padding-top: calc(var(--header-height) + 12px) !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        padding-bottom: 30px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .onedash-search-box {
+        display: none !important;
+    }
+
+    .onedash-user-info {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   Admin Responsive Pagination System (Prevents SVG Ballooning & Multi-Line Break)
+   ========================================================================== */
+.user-assignment-pagination,
+.box-footer .pagination-wrapper {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.user-assignment-pagination .pagination,
+.box-footer .pagination,
+.content-wrapper .pagination {
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 4px !important;
+    list-style: none !important;
+    padding-left: 0 !important;
+}
+
+.user-assignment-pagination .page-item,
+.box-footer .page-item,
+.content-wrapper .page-item {
+    margin: 0 2px !important;
+}
+
+.user-assignment-pagination .page-link,
+.box-footer .page-link,
+.content-wrapper .page-link {
+    border-radius: 8px !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.user-assignment-pagination .page-item.active .page-link,
+.box-footer .page-item.active .page-link,
+.content-wrapper .page-item.active .page-link {
+    background-color: #0c5c2d !important;
+    border-color: #0c5c2d !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(12, 92, 45, 0.3) !important;
+}
+
+.user-assignment-pagination .page-link:hover,
+.box-footer .page-link:hover,
+.content-wrapper .page-link:hover {
+    background-color: #f1f5f9 !important;
+    color: #0c5c2d !important;
+    border-color: #cbd5e1 !important;
+}
+
+.user-assignment-pagination .page-item.disabled .page-link,
+.box-footer .page-item.disabled .page-link,
+.content-wrapper .page-item.disabled .page-link {
+    color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    cursor: not-allowed !important;
+}
+
+/* Guard against unstyled SVG icons in Laravel default pagination */
+.user-assignment-pagination svg,
+.box-footer svg,
+.content-wrapper svg.w-5.h-5,
+.content-wrapper .pagination svg {
+    width: 14px !important;
+    height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+/* Suppress redundant nested Tailwind summary block if present */
+.user-assignment-pagination nav > div:first-child:not(.d-none) {
+    display: none !important;
+}
+
